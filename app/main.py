@@ -1,12 +1,21 @@
+import time
 from datetime import timedelta
 from authentication import authenticate_user, create_access_token, get_current_active_user, oauth2_scheme
 from models import Token, User
 from constants import ACCESS_TOKEN_EXPIRE_MINUTES
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from userdb import fake_users_db
 
 app = FastAPI()
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
 
 @app.get("/items/")
 async def read_items(token: str = Depends(oauth2_scheme)):
